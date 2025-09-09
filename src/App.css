@@ -1,0 +1,17 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  font-family: "Vazir", system-ui;
+  direction: rtl;
+  background-color: #f1f5f9;
+}
+
+button {
+  min-width: 0px;
+  padding: 0px;
+  background-color: transparent;
+  border: none;
+  margin: 0px;
+}

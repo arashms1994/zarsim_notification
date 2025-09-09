@@ -1,1 +1,22 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@font-face {
+  font-family: "Vazir";
+  src: url("/fonts/Vazir.woff2") format("woff2");
+  font-style: normal;
+}
+
+@layer base {
+  * {
+    font-family: "Vazir", system-ui;
+  }
+  body {
+    font-family: "Vazir", system-ui;
+  }
+}
+
+button {
+  min-width: none;
+  padding: 0px;
+}

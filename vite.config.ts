@@ -8,6 +8,8 @@ export default defineConfig({
   build: {
     outDir: "dist",
     assetsDir: ".",
+    minify: false,
+    sourcemap: true,
     rollupOptions: {
       output: {
         entryFileNames: `index.js`,
