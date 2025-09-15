@@ -1,81 +1,147 @@
-import { handleApprove, handleReject } from "@/api/addData";
-import type { ICashListItem } from "@/types/type";
+import { handleDontShow, handleSnooze } from "@/api/addData";
+import type { INotification } from "@/types/type";
 import { useQueryClient } from "@tanstack/react-query";
 import { BellOff, BellPlus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
-export const ActionsCell: React.FC<{ cashItem: ICashListItem }> = ({
-  cashItem,
+export const ActionsCell: React.FC<{ notification: INotification }> = ({
+  notification,
 }) => {
-  const [isDontShow, setDontShow] = useState(false);
-  const [isSnooze, setSnooze] = useState(false);
+  const [isProcessing, setIsProcessing] = useState<"dontShow" | "snooze" | null>(null);
   const queryClient = useQueryClient();
 
   const onDontShow = async () => {
-    setDontShow(true);
+    if (!notification?.ID || !notification?.Title) {
+      toast.error("اطلاعات اعلان نامعتبر است", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
+      return;
+    }
+
+    setIsProcessing("dontShow");
     try {
-      await handleApprove(cashItem);
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      await handleDontShow(notification);
+      queryClient.invalidateQueries({ queryKey: ["crm-notifications"] });
     } catch (err) {
-      console.error(err);
+      console.error("خطا در خاموش کردن اعلان:", err);
+      toast.error("خطا در خاموش کردن اعلان!", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
     } finally {
-      setDontShow(false);
+      setIsProcessing(null);
     }
   };
 
   const onSnooze = async () => {
-    setSnooze(true);
+    if (!notification?.ID || !notification?.Title) {
+      toast.error("اطلاعات اعلان نامعتبر است", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
+      return;
+    }
+
+    setIsProcessing("snooze");
     try {
-      await handleReject(cashItem);
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      await handleSnooze(notification);
+      queryClient.invalidateQueries({ queryKey: ["crm-notifications"] });
     } catch (err) {
-      console.error(err);
+      console.error("خطا در تعویق اعلان:", err);
+      toast.error("خطا در تعویق اعلان!", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
     } finally {
-      setSnooze(false);
+      setIsProcessing(null);
     }
   };
 
-  if (cashItem.status === "1") {
-    return <div className="text-green-600 font-semibold">تأیید شده</div>;
-  }
-
-  if (cashItem.status === "2") {
-    return <div className="text-red-600 font-semibold">رد شده</div>;
-  }
-
-  if (cashItem.status === "" || cashItem.status === "0") {
+  if (notification.dont_show === "1") {
     return (
-      <div className="space-x-2 flex items-center justify-center">
-        <div
-          onClick={onDontShow}
-          className={`flex items-center justify-center p-2 rounded-full transition-all duration-300 ${
-            isDontShow ? "bg-gray-400" : "bg-green-400 hover:bg-green-600"
-          }`}
-          title="خاموش"
-        >
-          {isDontShow ? (
-            <span className="text-xs">در حال پردازش...</span>
-          ) : (
-            <BellOff color="black" />
-          )}
-        </div>
-
-        <div
-          onClick={onSnooze}
-          className={`flex items-center justify-center p-2 rounded-full transition-all duration-300 ${
-            isSnooze ? "bg-gray-400" : "bg-amber-400 hover:bg-amber-600"
-          }`}
-          title="تعویق"
-        >
-          {isSnooze ? (
-            <span className="text-xs">در حال پردازش...</span>
-          ) : (
-            <BellPlus color="black" />
-          )}
-        </div>
-      </div>
+      <div style={{ color: "#16a34a", fontWeight: "600" }}>پایان اعلان</div>
     );
   }
 
-  return <div className="text-gray-500">وضعیت نامعتبر</div>;
+  return (
+    <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
+      <button
+        onClick={onDontShow}
+        disabled={isProcessing === "dontShow"}
+        aria-label="خاموش کردن اعلان"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+          borderRadius: "9999px",
+          backgroundColor: isProcessing === "dontShow" ? "#d1d5db" : "#4ade80",
+          transition: "background-color 0.3s",
+          cursor: isProcessing === "dontShow" ? "not-allowed" : "pointer",
+        }}
+        onMouseOver={(e) => {
+          if (isProcessing !== "dontShow") e.currentTarget.style.backgroundColor = "#16a34a";
+        }}
+        onMouseOut={(e) => {
+          if (isProcessing !== "dontShow") e.currentTarget.style.backgroundColor = "#4ade80";
+        }}
+      >
+        {isProcessing === "dontShow" ? (
+          <span style={{ fontSize: "12px" }}>در حال پردازش...</span>
+        ) : (
+          <BellOff color="black" />
+        )}
+      </button>
+
+      <button
+        onClick={onSnooze}
+        disabled={isProcessing === "snooze"}
+        aria-label="تعویق اعلان"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+          borderRadius: "9999px",
+          backgroundColor: isProcessing === "snooze" ? "#d1d5db" : "#fbbf24",
+          transition: "background-color 0.3s",
+          cursor: isProcessing === "snooze" ? "not-allowed" : "pointer",
+        }}
+        onMouseOver={(e) => {
+          if (isProcessing !== "snooze") e.currentTarget.style.backgroundColor = "#d97706";
+        }}
+        onMouseOut={(e) => {
+          if (isProcessing !== "snooze") e.currentTarget.style.backgroundColor = "#fbbf24";
+        }}
+      >
+        {isProcessing === "snooze" ? (
+          <span style={{ fontSize: "12px" }}>در حال پردازش...</span>
+        ) : (
+          <BellPlus color="black" />
+        )}
+      </button>
+    </div>
+  );
 };

@@ -1,59 +1,27 @@
+import { getDigest } from "@/lib/getDigest";
 import { BASE_URL } from "./base";
-import { getDigest } from "../lib/getDigest";
+import type { INotification } from "@/types/type";
 import { Bounce, toast } from "react-toastify";
-import type { ICashListItem } from "@/types/type";
 
-export async function addCashReceipt(data: {
-  Title: string;
-  count: string;
-  reference_number: string;
-  due_date: string;
-  status: string;
-}) {
-  const listName = "Cash_List";
-  const itemType = "SP.Data.Cash_x005f_ListListItem";
-
-  try {
-    const digest = await getDigest();
-
-    await fetch(`${BASE_URL}/_api/web/lists/getbytitle('${listName}')/items`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json;odata=verbose",
-        "Content-Type": "application/json;odata=verbose",
-        "X-RequestDigest": digest,
-      },
-      body: JSON.stringify({
-        __metadata: { type: itemType },
-        ...data,
-      }),
-    });
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error("خطا:", err.message);
-    } else {
-      console.error("خطای ناشناس:", err);
-    }
-  }
-}
-
-export async function updateCashReceipt(
+export async function updateNotification(
   data: {
     Title: string;
-    count: string;
-    reference_number: string;
-    due_date: string;
-    status: string;
+    dont_show: string;
+    Snooze?: string;
   },
   ID: number
 ) {
-  const listName = "Cash_List";
-  const itemType = "SP.Data.Cash_x005f_ListListItem";
+  const listName = "Notification";
+  const itemType = "SP.Data.NotificationListItem";
 
   try {
+    if (!ID || !data.Title) {
+      throw new Error("شناسه یا عنوان اعلان نامعتبر است");
+    }
+
     const digest = await getDigest();
 
-    await fetch(
+    const response = await fetch(
       `${BASE_URL}/_api/web/lists/getbytitle('${listName}')/items(${ID})`,
       {
         method: "POST",
@@ -70,29 +38,38 @@ export async function updateCashReceipt(
         }),
       }
     );
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error("خطا:", err.message);
-    } else {
-      console.error("خطای ناشناس:", err);
+
+    if (!response.ok) {
+      throw new Error(
+        `خطا در درخواست به‌روزرسانی: ${response.status} ${response.statusText}`
+      );
     }
+
+    return await response.json();
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
+    console.error(`خطا در به‌روزرسانی اعلان با شناسه ${ID}:`, errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
-export const handleApprove = async (cashItem: ICashListItem) => {
+export const handleDontShow = async (notification: INotification) => {
   try {
-    await updateCashReceipt(
+    if (!notification?.ID || !notification?.Title) {
+      throw new Error("اطلاعات اعلان نامعتبر است");
+    }
+
+    await updateNotification(
       {
-        Title: cashItem.Title,
-        count: cashItem.count,
-        reference_number: cashItem.reference_number,
-        due_date: cashItem.due_date,
-        status: "1",
+        Title: notification.Title,
+        dont_show: "1",
+        Snooze: "",
       },
-      cashItem.ID
+      notification.ID
     );
+
     toast.success(
-      `آیتم با شماره مرجع ${cashItem.reference_number} با موفقیت تأیید شد.`,
+      `آیتم با شناسه ${notification.ID} با موفقیت به‌روزرسانی شد.`,
       {
         position: "top-center",
         autoClose: 5000,
@@ -106,8 +83,12 @@ export const handleApprove = async (cashItem: ICashListItem) => {
       }
     );
   } catch (err) {
-    console.error("خطا در تأیید درخواست:", err);
-    toast.error("خطا در تایید آیتم!", {
+    const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
+    console.error(
+      `خطا در به‌روزرسانی آیتم با شناسه ${notification?.ID || "نامشخص"}:`,
+      errorMessage
+    );
+    toast.error(`خطا در به‌روزرسانی آیتم: ${errorMessage}`, {
       position: "top-center",
       autoClose: 5000,
       hideProgressBar: false,
@@ -118,24 +99,32 @@ export const handleApprove = async (cashItem: ICashListItem) => {
       theme: "colored",
       transition: Bounce,
     });
-    throw err;
+    throw new Error(errorMessage);
   }
 };
 
-export const handleReject = async (cashItem: ICashListItem) => {
+export const handleSnooze = async (notification: INotification) => {
   try {
-    await updateCashReceipt(
+    if (!notification?.ID || !notification?.Title) {
+      throw new Error("اطلاعات اعلان نامعتبر است");
+    }
+
+    const today = new Date();
+    const formattedDate = `${
+      today.getMonth() + 1
+    }/${today.getDate()}/${today.getFullYear()}`;
+
+    await updateNotification(
       {
-        Title: cashItem.Title,
-        count: cashItem.count,
-        reference_number: cashItem.reference_number,
-        due_date: cashItem.due_date,
-        status: "2",
+        Title: notification.Title,
+        Snooze: formattedDate,
+        dont_show: "0",
       },
-      cashItem.ID
+      notification.ID
     );
+
     toast.success(
-      `آیتم با شماره مرجع ${cashItem.reference_number} با موفقیت رد شد.`,
+      `آیتم با شناسه ${notification.ID} با موفقیت به تعویق افتاد.`,
       {
         position: "top-center",
         autoClose: 5000,
@@ -149,8 +138,12 @@ export const handleReject = async (cashItem: ICashListItem) => {
       }
     );
   } catch (err) {
-    console.error("خطا در رد درخواست:", err);
-    toast.error("خطا در رد آیتم!", {
+    const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
+    console.error(
+      `خطا در به تعویق انداختن آیتم با شناسه ${notification?.ID || "نامشخص"}:`,
+      errorMessage
+    );
+    toast.error(`خطا در به تعویق انداختن آیتم: ${errorMessage}`, {
       position: "top-center",
       autoClose: 5000,
       hideProgressBar: false,
@@ -161,6 +154,6 @@ export const handleReject = async (cashItem: ICashListItem) => {
       theme: "colored",
       transition: Bounce,
     });
-    throw err;
+    throw new Error(errorMessage);
   }
 };

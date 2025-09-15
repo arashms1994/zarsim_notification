@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "./button";
 import { ArrowUpDown } from "lucide-react";
 import { formatToJalali } from "@/lib/formatToJalali";
+import { ActionsCell } from "../action-colomn/ActionCell";
 
 export const columns: ColumnDef<INotification>[] = [
   {
@@ -72,7 +73,7 @@ export const columns: ColumnDef<INotification>[] = [
       if (!notification.ID || !notification.Title) {
         return <div className="text-red-500">داده‌های نامعتبر</div>;
       }
-      // return <ActionsCell notification={notification} />;
+      return <ActionsCell notification={notification} />;
     },
   },
 ];
