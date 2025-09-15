@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowUpDown,
-  CircleChevronLeft,
-  CircleChevronRight,
-} from "lucide-react";
+import { CircleChevronLeft, CircleChevronRight } from "lucide-react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,7 +9,6 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
-  type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
   type VisibilityState,
@@ -28,92 +22,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 // import { ActionsCell } from "../action-colomn/ActionCell";
-import type { INotification } from "@/types/type";
-import { formatToJalali } from "@/lib/formatToJalali";
-import { useNotifications } from "@/hooks/useNotifications";
-
-const columns: ColumnDef<INotification>[] = [
-  {
-    accessorKey: "Title",
-    header: "عنوان",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("Title")}</div>
-    ),
-  },
-  {
-    accessorKey: "assign",
-    header: "مسئول",
-    cell: ({ row }) => <div>{row.getValue("assign")}</div>,
-  },
-  {
-    accessorKey: "deadline",
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        تاریخ پایان
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div>{formatToJalali(row.getValue("deadline"))}</div>,
-  },
-  {
-    accessorKey: "massage",
-    header: "پیام",
-    cell: ({ row }) => <div>{row.getValue("massage") || "بدون پیام"}</div>,
-  },
-  {
-    accessorKey: "From_Date",
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        تاریخ شروع
-        <ArrowUpDown />
-      </Button>
-    ),
-    cell: ({ row }) => <div>{formatToJalali(row.getValue("From_Date"))}</div>,
-  },
-  {
-    accessorKey: "Item_URL",
-    header: "لینک آیتم",
-    cell: ({ row }) => (
-      <a
-        href={row.getValue("Item_URL")}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        لینک آیتم
-      </a>
-    ),
-  },
-  {
-    id: "actions",
-    header: "عملیات",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const notification = row.original;
-      if (!notification.ID || !notification.Title) {
-        return <div className="text-red-500">داده‌های نامعتبر</div>;
-      }
-      // return <ActionsCell notification={notification} />;
-    },
-  },
-];
+import { useCRMNotifications } from "@/hooks/useNotifications";
+import { columns } from "../ui/Colomns";
 
 export function NotificationTable() {
-  const { data: notifications = [], isLoading, error } = useNotifications();
+  const {
+    data: crmNotifications = [],
+    isLoading: crmIsLoading,
+    error: crmError,
+  } = useCRMNotifications();
+  // const {
+  //   data: portalNotifications = [],
+  //   isLoading: portalIsLoading,
+  //   error: portalError,
+  // } = usePORTALNotifications();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
+  // console.log("notifs:",portalNotifications, portalIsLoading, portalError)
+
   const table = useReactTable({
-    data: notifications,
+    data: crmNotifications,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -131,7 +62,7 @@ export function NotificationTable() {
     },
   });
 
-  if (isLoading) {
+  if (crmIsLoading) {
     return (
       <div className="flex flex-col space-y-3">
         <Skeleton className="h-[125px] w-[250px] rounded-xl" />
@@ -143,10 +74,10 @@ export function NotificationTable() {
     );
   }
 
-  if (error) {
+  if (crmError) {
     return (
       <div className="text-red-500">
-        خطا در بارگذاری داده‌ها: {error.message}
+        خطا در بارگذاری داده‌ها: {crmError.message}
       </div>
     );
   }
