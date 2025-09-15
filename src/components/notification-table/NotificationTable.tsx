@@ -60,9 +60,9 @@ const columns: ColumnDef<INotification>[] = [
     cell: ({ row }) => <div>{formatToJalali(row.getValue("deadline"))}</div>,
   },
   {
-    accessorKey: "message",
+    accessorKey: "massage",
     header: "پیام",
-    cell: ({ row }) => <div>{row.getValue("message") || "بدون پیام"}</div>,
+    cell: ({ row }) => <div>{row.getValue("massage") || "بدون پیام"}</div>,
   },
   {
     accessorKey: "From_Date",
