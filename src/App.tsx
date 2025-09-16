@@ -16,11 +16,9 @@ function App() {
     }
   }, []);
 
-  console.log(userName);
-  
   return (
     <>
-      <NotificationTable />
+      <NotificationTable loginName={userName} />
     </>
   );
 }

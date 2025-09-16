@@ -11,6 +11,9 @@ export interface INotification {
   Item_URL: string;
   Snooze: string;
 }
+export interface INotificationTableProps {
+  loginName: string;
+}
 
 export interface ISPPageContextInfo {
   userLoginName: string;

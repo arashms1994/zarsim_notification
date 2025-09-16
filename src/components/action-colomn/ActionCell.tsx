@@ -8,7 +8,9 @@ import { toast } from "react-toastify";
 export const ActionsCell: React.FC<{ notification: INotification }> = ({
   notification,
 }) => {
-  const [isProcessing, setIsProcessing] = useState<"dontShow" | "snooze" | null>(null);
+  const [isProcessing, setIsProcessing] = useState<
+    "dontShow" | "snooze" | null
+  >(null);
   const queryClient = useQueryClient();
 
   const onDontShow = async () => {
@@ -86,7 +88,14 @@ export const ActionsCell: React.FC<{ notification: INotification }> = ({
   }
 
   return (
-    <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "8px",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <button
         onClick={onDontShow}
         disabled={isProcessing === "dontShow"}
@@ -102,10 +111,12 @@ export const ActionsCell: React.FC<{ notification: INotification }> = ({
           cursor: isProcessing === "dontShow" ? "not-allowed" : "pointer",
         }}
         onMouseOver={(e) => {
-          if (isProcessing !== "dontShow") e.currentTarget.style.backgroundColor = "#16a34a";
+          if (isProcessing !== "dontShow")
+            e.currentTarget.style.backgroundColor = "#16a34a";
         }}
         onMouseOut={(e) => {
-          if (isProcessing !== "dontShow") e.currentTarget.style.backgroundColor = "#4ade80";
+          if (isProcessing !== "dontShow")
+            e.currentTarget.style.backgroundColor = "#4ade80";
         }}
       >
         {isProcessing === "dontShow" ? (
@@ -130,10 +141,12 @@ export const ActionsCell: React.FC<{ notification: INotification }> = ({
           cursor: isProcessing === "snooze" ? "not-allowed" : "pointer",
         }}
         onMouseOver={(e) => {
-          if (isProcessing !== "snooze") e.currentTarget.style.backgroundColor = "#d97706";
+          if (isProcessing !== "snooze")
+            e.currentTarget.style.backgroundColor = "#d97706";
         }}
         onMouseOut={(e) => {
-          if (isProcessing !== "snooze") e.currentTarget.style.backgroundColor = "#fbbf24";
+          if (isProcessing !== "snooze")
+            e.currentTarget.style.backgroundColor = "#fbbf24";
         }}
       >
         {isProcessing === "snooze" ? (

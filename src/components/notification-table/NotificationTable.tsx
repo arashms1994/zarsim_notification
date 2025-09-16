@@ -23,27 +23,26 @@ import {
 } from "@/components/ui/table";
 import { useCRMNotifications } from "@/hooks/useNotifications";
 import { columns } from "../ui/Colomns";
+import type { INotificationTableProps } from "@/types/type";
 
-export function NotificationTable() {
+export function NotificationTable({ loginName }: INotificationTableProps) {
   const {
     data: crmNotifications = [],
     isLoading: crmIsLoading,
     error: crmError,
   } = useCRMNotifications();
-  // const {
-  //   data: portalNotifications = [],
-  //   isLoading: portalIsLoading,
-  //   error: portalError,
-  // } = usePORTALNotifications();
+
+  const filteredNotifications = crmNotifications.filter(
+    (notification) => notification.assign === loginName
+  );
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
-  // console.log("notifs:",portalNotifications, portalIsLoading, portalError)
-
   const table = useReactTable({
-    data: crmNotifications,
+    data: filteredNotifications,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
