@@ -1,85 +1,67 @@
-import { handleDontShow, handleSnooze } from "@/api/addData";
 import type { INotification } from "@/types/type";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { ActionButton } from "../ui/ActionButton";
+import { handleDontShow, handleSnooze } from "@/api/addData";
 import { BellOff, BellPlus } from "lucide-react";
-import { useState } from "react";
 import { toast } from "react-toastify";
+import { debounce } from "lodash";
 
 export const ActionsCell: React.FC<{ notification: INotification }> = ({
   notification,
 }) => {
-  const [isProcessing, setIsProcessing] = useState<
-    "dontShow" | "snooze" | null
-  >(null);
+  const [loadingDontShow, setLoadingDontShow] = useState(false);
+  const [loadingSnooze, setLoadingSnooze] = useState(false);
   const queryClient = useQueryClient();
 
-  const onDontShow = async () => {
-    if (!notification?.ID || !notification?.Title) {
-      toast.error("اطلاعات اعلان نامعتبر است", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "colored",
-      });
-      return;
-    }
+  const runAction = useCallback(
+    async (
+      type: "dontShow" | "snooze",
+      handler: (n: INotification) => Promise<any>
+    ) => {
+      if (loadingDontShow || loadingSnooze) {
+        toast.info("لطفاً صبر کنید تا عملیات قبلی تکمیل شود");
+        return;
+      }
 
-    setIsProcessing("dontShow");
-    try {
-      await handleDontShow(notification);
-      queryClient.invalidateQueries({ queryKey: ["crm-notifications"] });
-    } catch (err) {
-      console.error("خطا در خاموش کردن اعلان:", err);
-      toast.error("خطا در خاموش کردن اعلان!", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "colored",
-      });
-    } finally {
-      setIsProcessing(null);
-    }
-  };
+      try {
+        if (type === "dontShow") setLoadingDontShow(true);
+        if (type === "snooze") setLoadingSnooze(true);
 
-  const onSnooze = async () => {
-    if (!notification?.ID || !notification?.Title) {
-      toast.error("اطلاعات اعلان نامعتبر است", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "colored",
-      });
-      return;
-    }
+        await handler(notification);
 
-    setIsProcessing("snooze");
-    try {
-      await handleSnooze(notification);
-      queryClient.invalidateQueries({ queryKey: ["crm-notifications"] });
-    } catch (err) {
-      console.error("خطا در تعویق اعلان:", err);
-      toast.error("خطا در تعویق اعلان!", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "colored",
-      });
-    } finally {
-      setIsProcessing(null);
-    }
-  };
+        queryClient.setQueryData<INotification[]>(
+          ["crm-notifications"],
+          (old) =>
+            old
+              ? old.map((n) =>
+                  n.ID === notification.ID
+                    ? {
+                        ...n,
+                        dont_show: type === "dontShow" ? "1" : "0",
+                        Snooze:
+                          type === "snooze"
+                            ? new Date().toLocaleDateString("en-US")
+                            : "",
+                      }
+                    : n
+                )
+              : old
+        );
+      } catch (err) {
+        console.error(err);
+        toast.error(
+          `خطا در ${type === "dontShow" ? "خاموش کردن" : "تعویق"} اعلان`
+        );
+      } finally {
+        if (type === "dontShow") setLoadingDontShow(false);
+        if (type === "snooze") setLoadingSnooze(false);
+      }
+    },
+    [notification, queryClient, loadingDontShow, loadingSnooze]
+  );
+
+  const debouncedRunAction = debounce(runAction, 300);
 
   if (notification.dont_show === "1") {
     return (
@@ -96,65 +78,25 @@ export const ActionsCell: React.FC<{ notification: INotification }> = ({
         justifyContent: "center",
       }}
     >
-      <button
-        onClick={onDontShow}
-        disabled={isProcessing === "dontShow"}
-        aria-label="خاموش کردن اعلان"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "8px",
-          borderRadius: "9999px",
-          backgroundColor: isProcessing === "dontShow" ? "#d1d5db" : "#4ade80",
-          transition: "background-color 0.3s",
-          cursor: isProcessing === "dontShow" ? "not-allowed" : "pointer",
-        }}
-        onMouseOver={(e) => {
-          if (isProcessing !== "dontShow")
-            e.currentTarget.style.backgroundColor = "#16a34a";
-        }}
-        onMouseOut={(e) => {
-          if (isProcessing !== "dontShow")
-            e.currentTarget.style.backgroundColor = "#4ade80";
-        }}
-      >
-        {isProcessing === "dontShow" ? (
-          <span style={{ fontSize: "12px" }}>در حال پردازش...</span>
-        ) : (
-          <BellOff color="black" />
-        )}
-      </button>
+      <ActionButton
+        onClick={() => debouncedRunAction("dontShow", handleDontShow)}
+        disabled={loadingDontShow || loadingSnooze}
+        isProcessing={loadingDontShow}
+        defaultColor="#4ade80"
+        hoverColor="#16a34a"
+        icon={<BellOff color="black" />}
+        label="خاموش کردن اعلان"
+      />
 
-      <button
-        onClick={onSnooze}
-        disabled={isProcessing === "snooze"}
-        aria-label="تعویق اعلان"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "8px",
-          borderRadius: "9999px",
-          backgroundColor: isProcessing === "snooze" ? "#d1d5db" : "#fbbf24",
-          transition: "background-color 0.3s",
-          cursor: isProcessing === "snooze" ? "not-allowed" : "pointer",
-        }}
-        onMouseOver={(e) => {
-          if (isProcessing !== "snooze")
-            e.currentTarget.style.backgroundColor = "#d97706";
-        }}
-        onMouseOut={(e) => {
-          if (isProcessing !== "snooze")
-            e.currentTarget.style.backgroundColor = "#fbbf24";
-        }}
-      >
-        {isProcessing === "snooze" ? (
-          <span style={{ fontSize: "12px" }}>در حال پردازش...</span>
-        ) : (
-          <BellPlus color="black" />
-        )}
-      </button>
+      <ActionButton
+        onClick={() => debouncedRunAction("snooze", handleSnooze)}
+        disabled={loadingDontShow || loadingSnooze}
+        isProcessing={loadingSnooze}
+        defaultColor="#fbbf24"
+        hoverColor="#d97706"
+        icon={<BellPlus color="black" />}
+        label="تعویق اعلان"
+      />
     </div>
   );
 };

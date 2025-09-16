@@ -45,7 +45,7 @@ export async function updateNotification(
       );
     }
 
-    return await response.json();
+    return { success: true };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
     console.error(`خطا در به‌روزرسانی اعلان با شناسه ${ID}:`, errorMessage);
@@ -54,106 +54,60 @@ export async function updateNotification(
 }
 
 export const handleDontShow = async (notification: INotification) => {
-  try {
-    if (!notification?.ID || !notification?.Title) {
-      throw new Error("اطلاعات اعلان نامعتبر است");
-    }
-
-    await updateNotification(
-      {
-        Title: notification.Title,
-        dont_show: "1",
-        Snooze: "",
-      },
-      notification.ID
-    );
-
-    toast.success(
-      `آیتم با شناسه ${notification.ID} با موفقیت به‌روزرسانی شد.`,
-      {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      }
-    );
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
-    console.error(
-      `خطا در به‌روزرسانی آیتم با شناسه ${notification?.ID || "نامشخص"}:`,
-      errorMessage
-    );
-    toast.error(`خطا در به‌روزرسانی آیتم: ${errorMessage}`, {
-      position: "top-center",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-    throw new Error(errorMessage);
+  if (!notification?.ID || !notification?.Title) {
+    throw new Error("اطلاعات اعلان نامعتبر است");
   }
+
+  await updateNotification(
+    {
+      Title: notification.Title,
+      dont_show: "1",
+      Snooze: "",
+    },
+    notification.ID
+  );
+
+  toast.success(`اعلان ${notification.Title} خاموش شد.`, {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+    transition: Bounce,
+  });
 };
 
 export const handleSnooze = async (notification: INotification) => {
-  try {
-    if (!notification?.ID || !notification?.Title) {
-      throw new Error("اطلاعات اعلان نامعتبر است");
-    }
-
-    const today = new Date();
-    const formattedDate = `${
-      today.getMonth() + 1
-    }/${today.getDate()}/${today.getFullYear()}`;
-
-    await updateNotification(
-      {
-        Title: notification.Title,
-        Snooze: formattedDate,
-        dont_show: "0",
-      },
-      notification.ID
-    );
-
-    toast.success(
-      `آیتم با شناسه ${notification.ID} با موفقیت به تعویق افتاد.`,
-      {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      }
-    );
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "خطای ناشناس";
-    console.error(
-      `خطا در به تعویق انداختن آیتم با شناسه ${notification?.ID || "نامشخص"}:`,
-      errorMessage
-    );
-    toast.error(`خطا در به تعویق انداختن آیتم: ${errorMessage}`, {
-      position: "top-center",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-    throw new Error(errorMessage);
+  if (!notification?.ID || !notification?.Title) {
+    throw new Error("اطلاعات اعلان نامعتبر است");
   }
+
+  const today = new Date();
+  const formattedDate = `${
+    today.getMonth() + 1
+  }/${today.getDate()}/${today.getFullYear()}`;
+
+  await updateNotification(
+    {
+      Title: notification.Title,
+      Snooze: formattedDate,
+      dont_show: "0",
+    },
+    notification.ID
+  );
+
+  toast.success(`اعلان ${notification.Title} به تعویق افتاد.`, {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: false,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "colored",
+    transition: Bounce,
+  });
 };
